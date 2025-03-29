@@ -1,0 +1,41 @@
+WITH CategorizedHotels AS (
+    SELECT 
+        hotel.ID_hotel,
+        CASE
+            WHEN AVG(room.price) < 175 THEN 'Эконом'
+            WHEN AVG(room.price) BETWEEN 175 AND 300 THEN 'Стандарт'
+            ELSE 'Премиум'
+        END AS price_category
+    FROM Hotel hotel
+    JOIN Room room ON hotel.ID_hotel = room.ID_hotel
+    GROUP BY hotel.ID_hotel
+),
+CustomerHotelStats AS (
+    SELECT 
+        book.ID_customer,
+        MAX(CASE 
+            WHEN ch.price_category = 'Премиум' THEN 'Премиум'
+            WHEN ch.price_category = 'Стандарт' THEN 'Стандарт'
+            ELSE 'Эконом'
+        END) AS top_preference,
+        STRING_AGG(DISTINCT hotel.name, ', ') AS hotel_history
+    FROM Booking book
+    JOIN Room room ON book.ID_room = room.ID_room
+    JOIN Hotel hotel ON room.ID_hotel = hotel.ID_hotel
+    JOIN CategorizedHotels ch ON hotel.ID_hotel = ch.ID_hotel
+    GROUP BY book.ID_customer
+)
+
+SELECT 
+    cust_hs.ID_customer,
+    cust.name,
+    cust_hs.top_preference,
+    cust_hs.hotel_history
+FROM CustomerHotelStats cust_hs
+JOIN Customer cust ON cust_hs.ID_customer = cust.ID_customer
+ORDER BY 
+    CASE cust_hs.top_preference
+        WHEN 'Эконом' THEN 1
+        WHEN 'Стандарт' THEN 2
+        WHEN 'Премиум' THEN 3
+    END;
