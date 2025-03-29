@@ -1,0 +1,9 @@
+select 
+ Vehicle.maker, 
+ Motorcycle.model
+from Vehicle
+join Motorcycle on Vehicle.model = Motorcycle.model
+where Motorcycle.horsepower > 150
+ and Motorcycle.price < 20000
+ and Motorcycle.type = 'Sport'
+order by Motorcycle.horsepower desc;
