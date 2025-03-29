@@ -1,0 +1,36 @@
+WITH CustomerStats AS (
+    SELECT 
+        cust.ID_customer,
+        cust.name AS customer_name,
+        COUNT(book.ID_booking) AS booking_count,
+        COUNT(DISTINCT hotel.ID_hotel) AS distinct_hotels,
+        SUM(room.price) AS total_amount_spent
+    FROM Booking book
+    JOIN Customer cust ON book.ID_customer = cust.ID_customer
+    JOIN Room room ON book.ID_room = room.ID_room
+    JOIN Hotel hotel ON room.ID_hotel = hotel.ID_hotel
+    GROUP BY cust.ID_customer, cust.name
+    HAVING COUNT(book.ID_booking) > 2 AND COUNT(DISTINCT hotel.ID_hotel) > 1
+),
+HighSpendingCustomers AS (
+    SELECT 
+        cust.ID_customer,
+        cust.name AS customer_name,
+        SUM(room.price) AS total_spent,
+        COUNT(book.ID_booking) AS booking_count
+    FROM Booking book
+    JOIN Customer cust ON book.ID_customer = cust.ID_customer
+    JOIN Room room ON book.ID_room = room.ID_room
+    GROUP BY cust.ID_customer, cust.name
+    HAVING SUM(room.price) > 500
+)
+
+SELECT 
+    cs.ID_customer,
+    cs.customer_name,
+    cs.booking_count,
+    cs.total_amount_spent,
+    cs.distinct_hotels
+FROM CustomerStats cs
+JOIN HighSpendingCustomers hsc ON cs.ID_customer = hsc.ID_customer
+ORDER BY cs.total_amount_spent ASC;
