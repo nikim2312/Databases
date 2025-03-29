@@ -1,0 +1,54 @@
+WITH RECURSIVE EmployeeHierarchy AS (
+    SELECT 
+        e.EmployeeID,
+        e.Name AS EmployeeName,
+        e.ManagerID,
+        e.DepartmentID,
+        e.RoleID
+    FROM Employees e
+    WHERE e.ManagerID = 1  
+    
+    UNION ALL
+    
+    SELECT 
+        emp.EmployeeID,
+        emp.Name,
+        emp.ManagerID,
+        emp.DepartmentID,
+        emp.RoleID
+    FROM Employees emp
+    INNER JOIN EmployeeHierarchy eh 
+        ON emp.ManagerID = eh.EmployeeID  
+)
+SELECT
+    eh.EmployeeID,
+    eh.EmployeeName,
+    eh.ManagerID,
+    COALESCE(dep.DepartmentName, 'Нет отдела') AS Department, 
+    COALESCE(rl.RoleName, 'Нет должности') AS Role,
+    
+    COALESCE((
+        SELECT STRING_AGG(proj.ProjectName, ', ') 
+        FROM Projects proj 
+        WHERE proj.DepartmentID = eh.DepartmentID
+    ), 'Нет проектов') AS ProjectNames,
+    
+    COALESCE((
+        SELECT STRING_AGG(task.TaskName, ', ') 
+        FROM Tasks task 
+        WHERE task.AssignedTo = eh.EmployeeID
+    ), 'Нет задач') AS TaskNames,
+    
+    (SELECT COUNT(*) 
+     FROM Tasks task 
+     WHERE task.AssignedTo = eh.EmployeeID) AS TotalTasks,
+    
+    (SELECT COUNT(*) 
+     FROM Employees emp 
+     WHERE emp.ManagerID = eh.EmployeeID) AS TotalSubordinates
+FROM EmployeeHierarchy eh
+LEFT JOIN Departments dep 
+    ON eh.DepartmentID = dep.DepartmentID
+LEFT JOIN Roles rl 
+    ON eh.RoleID = rl.RoleID
+ORDER BY eh.EmployeeName;
