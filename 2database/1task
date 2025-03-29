@@ -1,0 +1,26 @@
+with CarAvg as(
+select
+ Cars.name as car_name,
+ Cars.class as car_class,
+ avg(Results.position) as average_position,
+ count(Results.race) as race_count
+from Cars
+join Results on Cars.name = Results.car
+group by Cars.name, Cars.class
+),
+ClsMinPos as(
+select 
+ car_class,
+ min(average_position) as min_pos
+from CarAvg
+group by car_class
+)
+select
+ CarAvg.car_name,
+ CarAvg.car_class,
+ round(CarAvg.average_position, 4) as average_position,
+ CarAvg.race_count
+from CarAvg
+join ClsMinPos on CarAvg.car_class = ClsMinPos.car_class
+    and CarAvg.average_position = ClsMinPos.min_pos
+order by average_position;
