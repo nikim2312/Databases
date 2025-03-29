@@ -1,0 +1,47 @@
+WITH IndividualCarStats AS (
+    SELECT 
+        c.name AS model_name,
+        c.class AS category,
+        AVG(r.position) AS avg_rank,
+        COUNT(r.race) AS total_races
+    FROM Cars c
+    INNER JOIN Results r ON c.name = r.car
+    GROUP BY c.name, c.class
+),
+FilteredCars AS (
+    SELECT 
+        ics.model_name,
+        ics.category,
+        ics.avg_rank,
+        ics.total_races
+    FROM IndividualCarStats ics
+    WHERE ics.avg_rank > 3.0
+),
+TotalClassRaces AS (
+    SELECT 
+        c.class AS category,
+        COUNT(r.race) AS total_races_in_class
+    FROM Cars c
+    INNER JOIN Results r ON c.name = r.car
+    GROUP BY c.class
+),
+LowRankedCarsPerClass AS (
+    SELECT 
+        fc.category,
+        COUNT(fc.model_name) AS low_ranked_count
+    FROM FilteredCars fc
+    GROUP BY fc.category
+)
+SELECT 
+    fc.model_name,
+    fc.category,
+    ROUND(fc.avg_rank, 4) AS avg_rank,
+    fc.total_races,
+    cls.origin_country,
+    tcr.total_races_in_class,
+    lrc.low_ranked_count
+FROM FilteredCars fc
+INNER JOIN LowRankedCarsPerClass lrc ON fc.category = lrc.category
+INNER JOIN Classes cls ON fc.category = cls.class
+INNER JOIN TotalClassRaces tcr ON fc.category = tcr.category
+ORDER BY lrc.low_ranked_count DESC, fc.avg_rank DESC;
