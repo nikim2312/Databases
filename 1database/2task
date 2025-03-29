@@ -1,0 +1,43 @@
+select 
+ Vehicle.maker,
+ Car.model,
+ Car.horsepower,
+ Car.engine_capacity,
+ 'Car' as vehicle_type
+from Vehicle
+join Car on Vehicle.model = Car.model
+where
+ Car.horsepower > 150
+ and Car.engine_capacity < 3
+ and Car.price < 35000
+
+union all
+
+select 
+ Vehicle.maker,
+ Motorcycle.model,
+ Motorcycle.horsepower,
+ Motorcycle.engine_capacity,
+ 'Motorcycle' as vehicle_type
+from Vehicle
+join Motorcycle on Vehicle.model = Motorcycle.model
+where
+ Motorcycle.horsepower > 150
+ and Motorcycle.engine_capacity < 1.5
+ and Motorcycle.price < 20000
+
+union all
+
+select 
+ Vehicle.maker,
+ Bicycle.model,
+ null as horsepower,
+ null as engine_capacity,
+ 'Bycicle' as vehicle_type
+from Vehicle
+join Bicycle on Vehicle.model = Bicycle.model
+where
+ Bicycle.gear_count > 18
+ and Bicycle.price < 4000
+
+order by horsepower desc nulls last;
