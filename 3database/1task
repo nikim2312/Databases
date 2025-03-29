@@ -1,0 +1,30 @@
+WITH CustomerBookingStats AS (
+    SELECT 
+        cust.ID_customer,
+        cust.name AS full_name,
+        cust.email AS contact_email,
+        cust.phone AS contact_number,
+        COUNT(res.ID_booking) AS booking_count,
+        STRING_AGG(DISTINCT ht.name, ', ') AS hotels_visited,
+        ROUND(AVG(res.check_out_date - res.check_in_date), 4) AS avg_nights
+    FROM Booking res
+    INNER JOIN Customer cust ON res.ID_customer = cust.ID_customer
+    INNER JOIN Room rm ON res.ID_room = rm.ID_room
+    INNER JOIN Hotel ht ON rm.ID_hotel = ht.ID_hotel
+    GROUP BY cust.ID_customer
+)
+SELECT 
+    cb.full_name,
+    cb.contact_email,
+    cb.contact_number,
+    cb.booking_count,
+    cb.hotels_visited,
+    cb.avg_nights
+FROM CustomerBookingStats cb
+WHERE 
+    (SELECT COUNT(DISTINCT rm.ID_hotel) 
+     FROM Booking res
+     INNER JOIN Room rm ON res.ID_room = rm.ID_room
+     WHERE res.ID_customer = cb.ID_customer) > 1
+    AND cb.booking_count >= 3
+ORDER BY cb.booking_count DESC;
