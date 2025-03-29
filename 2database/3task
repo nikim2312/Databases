@@ -1,0 +1,38 @@
+WITH ClassStats AS (
+    SELECT 
+        c.class AS category,
+        AVG(r.position) AS avg_position_per_class,
+        COUNT(r.race) AS total_races
+    FROM Cars c
+    INNER JOIN Results r ON c.name = r.car
+    GROUP BY c.class
+), 
+MinClassPosition AS (
+    SELECT MIN(avg_position_per_class) AS lowest_avg_position
+    FROM ClassStats
+), 
+FilteredClasses AS (
+    SELECT cs.category, cs.avg_position_per_class, cs.total_races
+    FROM ClassStats cs
+    INNER JOIN MinClassPosition mp ON cs.avg_position_per_class = mp.lowest_avg_position
+)
+SELECT 
+    car_details.car_name,
+    car_details.category,
+    ROUND(car_details.avg_position, 4) AS avg_position,
+    car_details.race_count,
+    cls.country,
+    fc.total_races
+FROM (
+    SELECT 
+        c.name AS car_name,
+        c.class AS category,
+        AVG(r.position) AS avg_position,
+        COUNT(r.race) AS race_count
+    FROM Cars c
+    INNER JOIN Results r ON c.name = r.car
+    GROUP BY c.name, c.class
+) car_details
+INNER JOIN FilteredClasses fc ON car_details.category = fc.category
+INNER JOIN Classes cls ON car_details.category = cls.class
+ORDER BY avg_position, car_name;
