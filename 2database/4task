@@ -1,0 +1,31 @@
+WITH PerCarStats AS (
+    SELECT 
+        c.name AS car_model,
+        c.class AS category,
+        AVG(r.position) AS avg_position,
+        COUNT(r.race) AS total_races
+    FROM Cars c
+    INNER JOIN Results r ON c.name = r.car
+    GROUP BY c.name, c.class
+),
+PerClassStats AS (
+    SELECT 
+        c.class AS category,
+        AVG(r.position) AS class_avg_position,
+        COUNT(DISTINCT c.name) AS total_cars
+    FROM Cars c
+    INNER JOIN Results r ON c.name = r.car
+    GROUP BY c.class
+)
+SELECT 
+    pcs.car_model,
+    pcs.category,
+    ROUND(pcs.avg_position, 4) AS avg_position,
+    pcs.total_races,
+    cls.country AS origin_country
+FROM PerCarStats pcs
+INNER JOIN PerClassStats pcls ON pcs.category = pcls.category
+INNER JOIN Classes cls ON pcs.category = cls.class
+WHERE pcs.avg_position < pcls.class_avg_position  
+  AND pcls.total_cars > 1  
+ORDER BY pcs.category, pcs.avg_position;
